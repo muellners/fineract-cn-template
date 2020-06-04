@@ -19,11 +19,13 @@ dependencies {
     api project(':api')
     api project(':service')
 
+    implementation 'org.springframework.boot:spring-boot-starter-activemq'
+//    implementation "org.springframework.boot:spring-boot-starter-test"
+
     implementation "org.apache.fineract.cn.anubis:test:$frameworkanubisVersion"
     implementation "org.apache.fineract.cn:api:$frameworkapiVersion"
     implementation "org.apache.fineract.cn:test:$frameworktestVersion"
     implementation "org.apache.fineract.cn:lang:$frameworklangVersion"
-    implementation "org.springframework.boot:spring-boot-starter-test"
 }
 
 bootJar {

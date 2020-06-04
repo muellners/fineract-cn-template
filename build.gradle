@@ -26,11 +26,49 @@ plugins {
     id 'idea'
 }
 
+allprojects {
+    apply plugin: 'com.github.hierynomus.license'
+    apply plugin: 'org.nosphere.apache.rat'
+
+    repositories {
+        jcenter()
+        mavenLocal()
+        maven { url 'https://mifos.jfrog.io/mifos/libs-snapshot/' }
+        mavenCentral()
+    }
+
+    license {
+        header rootProject.file('./HEADER')
+        strictCheck true
+        mapping {
+            java = 'SLASHSTAR_STYLE'
+            xml = 'XML_STYLE'
+            yml = 'SCRIPT_STYLE'
+            yaml = 'SCRIPT_STYLE'
+        }
+    }
+
+    rat {
+        // List of exclude directives, defaults to ['**/.gradle/**']
+        excludes = [
+                "**/.idea/**",
+                "**/.gradle/**",
+                "**/gradle/**",
+                "**/build/**",
+                "gradlew",
+                "gradlew.bat",
+                "README.md",
+                ".classpath",
+                ".project",
+                ".settings/**",
+                "**/bin/**"
+        ]
+    }
+}
+
 subprojects {
     apply plugin: 'org.springframework.boot'
     apply plugin: 'io.spring.dependency-management'
-    apply plugin: 'com.github.hierynomus.license'
-    apply plugin: 'org.nosphere.apache.rat'
     apply plugin: 'com.jfrog.artifactory'
     apply plugin: 'maven-publish'
     apply plugin: 'java-library'
@@ -39,13 +77,6 @@ subprojects {
     group = 'org.apache.fineract.cn.template'
     version = 'spring_boot_2-SNAPSHOT'
     sourceCompatibility = '1.8'
-
-    repositories {
-        jcenter()
-        mavenLocal()
-        maven { url 'https://mifos.jfrog.io/mifos/libs-snapshot/' }
-        mavenCentral()
-    }
 
     ext {
         set('springBootVersion', '2.2.6.RELEASE')
@@ -108,32 +139,4 @@ subprojects {
         }
     }
     artifactoryPublish.dependsOn('publishToMavenLocal')
-
-    license {
-        header rootProject.file('./HEADER')
-        strictCheck true
-        mapping {
-            java = 'SLASHSTAR_STYLE'
-            xml = 'XML_STYLE'
-            yml = 'SCRIPT_STYLE'
-            yaml = 'SCRIPT_STYLE'
-        }
-    }
-
-    rat {
-        // List of exclude directives, defaults to ['**/.gradle/**']
-        excludes = [
-                "**/.idea/**",
-                "**/.gradle/**",
-                "**/gradle/**",
-                "**/build/**",
-                "gradlew",
-                "gradlew.bat",
-                "README.md",
-                ".classpath",
-                ".project",
-                ".settings/**",
-                "**/bin/**"
-        ]
-    }
 }
