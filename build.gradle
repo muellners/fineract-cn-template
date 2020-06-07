@@ -15,61 +15,128 @@
  * limitations under the License.
  */
 
-group 'org.apache.fineract.cn'
-
-task publishApiToMavenLocal {
-    dependsOn gradle.includedBuild('api').task(':publishToMavenLocal')
+plugins {
+    id 'org.springframework.boot' version '2.2.6.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+    id 'com.github.hierynomus.license' version '0.15.0'
+    id 'org.nosphere.apache.rat' version '0.6.0'
+    id 'com.jfrog.artifactory' version '4.15.1'
+    id 'maven-publish'
+    id 'java-library'
+    id 'idea'
 }
 
-task publishServiceToMavenLocal {
-    mustRunAfter publishApiToMavenLocal
-    dependsOn gradle.includedBuild('service').task(':publishToMavenLocal')
+allprojects {
+    apply plugin: 'com.github.hierynomus.license'
+    apply plugin: 'org.nosphere.apache.rat'
+
+    repositories {
+        jcenter()
+        mavenLocal()
+        maven { url 'https://mifos.jfrog.io/mifos/libs-snapshot/' }
+        mavenCentral()
+    }
+
+    license {
+        header rootProject.file('./HEADER')
+        strictCheck true
+        mapping {
+            java = 'SLASHSTAR_STYLE'
+            xml = 'XML_STYLE'
+            yml = 'SCRIPT_STYLE'
+            yaml = 'SCRIPT_STYLE'
+        }
+    }
+
+    rat {
+        // List of exclude directives, defaults to ['**/.gradle/**']
+        excludes = [
+                "**/.idea/**",
+                "**/.gradle/**",
+                "**/gradle/**",
+                "**/build/**",
+                "gradlew",
+                "gradlew.bat",
+                "README.md",
+                ".classpath",
+                ".project",
+                ".settings/**",
+                "**/bin/**"
+        ]
+    }
 }
 
-task publishComponentTestToMavenLocal {
-    mustRunAfter publishApiToMavenLocal
-    mustRunAfter publishServiceToMavenLocal
-    dependsOn gradle.includedBuild('component-test').task(':publishToMavenLocal')
-}
+subprojects {
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'com.jfrog.artifactory'
+    apply plugin: 'maven-publish'
+    apply plugin: 'java-library'
+    apply plugin: 'idea'
 
-task publishToMavenLocal {
-    group 'all'
-    dependsOn publishApiToMavenLocal
-    dependsOn publishServiceToMavenLocal
-    dependsOn publishComponentTestToMavenLocal
-}
+    group = 'org.apache.fineract.cn.template'
+    version = 'spring_boot_2-SNAPSHOT'
+    sourceCompatibility = '1.8'
 
-task artifactoryPublish {
-    group 'all'
-    dependsOn publishToMavenLocal
-    dependsOn gradle.includedBuild('api').task(':artifactoryPublish')
-    dependsOn gradle.includedBuild('service').task(':artifactoryPublish')
-    dependsOn gradle.includedBuild('component-test').task(':artifactoryPublish')
-}
+    ext {
+        set('springBootVersion', '2.2.6.RELEASE')
+        set('springCloudVersion', "Hoxton.SR3")
 
-task prepareForTest {
-    group 'all'
-    dependsOn publishToMavenLocal
-    dependsOn gradle.includedBuild('component-test').task(':build')
-}
+        set('frameworkapiVersion', 'spring_boot_2-SNAPSHOT')
+        set('frameworklangVersion', 'spring_boot_2-SNAPSHOT')
+        set('frameworkasyncVersion', 'spring_boot_2-SNAPSHOT')
+        set('frameworkcassandraVersion', 'spring_boot_2-SNAPSHOT')
+        set('frameworkpostgresqlVersion', 'spring_boot_2-SNAPSHOT')
+        set('frameworkcommandVersion', 'spring_boot_2-SNAPSHOT')
+        set('frameworktestVersion', 'spring_boot_2-SNAPSHOT')
+        set('frameworkanubisVersion', 'spring_boot_2-SNAPSHOT')
 
-task clean {
-    group 'all'
-    dependsOn gradle.includedBuild('api').task(':clean')
-    dependsOn gradle.includedBuild('service').task(':clean')
-    dependsOn gradle.includedBuild('component-test').task(':clean')
-}
+        set('cassandra.version', '3.6')
+        set('cassandra-driver.version', '3.1.2')
+        set('activemq.version', '5.13.2')
+        set('spring-data-releasetrain.version', 'Gosling-SR2A')
+        set('validatorVersion', '6.1.4.Final')
+    }
 
-task licenseFormat {
-    group 'all'
-    dependsOn gradle.includedBuild('api').task(':licenseFormat')
-    dependsOn gradle.includedBuild('service').task(':licenseFormat')
-    dependsOn gradle.includedBuild('component-test').task(':licenseFormat')
-}
+    dependencies {
+        implementation 'com.google.code.findbugs:jsr305'
+        implementation "org.apache.fineract.cn:postgresql:$frameworkpostgresqlVersion"
 
-task rat {
-    group 'all'
-    dependsOn gradle.includedBuild('api').task(':rat')
-    dependsOn gradle.includedBuild('service').task(':rat')
-    dependsOn gradle.includedBuild('component-test').task(':rat')
+        testImplementation('org.springframework.boot:spring-boot-starter-test') {
+            exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+        }
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom 'io.spring.platform:platform-bom:Cairo-SR8'
+            mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        }
+    }
+
+    tasks.withType(JavaCompile) {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    jar {
+        from sourceSets.main.java
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+
+    artifactory {
+        contextUrl = System.getenv("ARTIFACTORY_URL")
+        publish {
+            repository {
+                repoKey = project.findProperty('artifactoryRepoKey')
+                username = System.getenv("ARTIFACTORY_USER")
+                password = System.getenv("ARTIFACTORY_PASSWORD")
+            }
+
+            defaults {
+                publications ('api', 'componentTest', 'service', 'bootService')
+            }
+        }
+    }
+    artifactoryPublish.dependsOn('publishToMavenLocal')
 }

@@ -15,40 +15,21 @@
  * limitations under the License.
  */
 
-buildscript {
-    ext {
-        springBootVersion = '1.4.1.RELEASE'
-    }
-    repositories {
-        jcenter()
-    }
-}
+dependencies {
+    api project(':api')
+    api project(':service')
 
-plugins {
-    id 'com.github.hierynomus.license' version '0.15.0'
-    id 'org.nosphere.apache.rat' version '0.6.0'
-    id 'com.jfrog.artifactory' version '4.15.1'
-    id "io.spring.dependency-management" version "1.0.9.RELEASE"
-    id 'org.springframework.boot' version '2.2.6.RELEASE'
-    id 'maven-publish'
-    id 'java'
+    implementation 'org.springframework.boot:spring-boot-starter-activemq'
+//    implementation "org.springframework.boot:spring-boot-starter-test"
+
+    implementation "org.apache.fineract.cn.anubis:test:$frameworkanubisVersion"
+    implementation "org.apache.fineract.cn:api:$frameworkapiVersion"
+    implementation "org.apache.fineract.cn:test:$frameworktestVersion"
+    implementation "org.apache.fineract.cn:lang:$frameworklangVersion"
 }
-apply from: '../shared.gradle'
 
 bootJar {
     enabled = false
-}
-
-dependencies {
-    compile(
-            [group: 'org.apache.fineract.cn.template', name: 'api', version: project.version],
-            [group: 'org.apache.fineract.cn.template', name: 'service', version: project.version],
-            [group: 'org.apache.fineract.cn.anubis', name: 'test', version: versions.frameworkanubis],
-            [group: 'org.apache.fineract.cn', name: 'api', version: versions.frameworkapi],
-            [group: 'org.apache.fineract.cn', name: 'test', version: versions.frameworktest],
-            [group: 'org.apache.fineract.cn', name: 'lang', version: versions.frameworklang],
-            [group: 'org.springframework.boot', name: 'spring-boot-starter-test']
-    )
 }
 
 jar {
