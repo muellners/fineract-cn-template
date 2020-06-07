@@ -18,5 +18,3 @@
 rootProject.name = 'template'
 
 include 'api', 'service', 'component-test'
-
-
