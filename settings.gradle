@@ -17,7 +17,6 @@
 
 rootProject.name = 'template'
 
-includeBuild 'api'
-includeBuild 'service'
-includeBuild 'component-test'
+include 'api', 'service', 'component-test'
+
 
